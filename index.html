@@ -1,4 +1,5 @@
-!DOCTYPE html>.
+
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -13,58 +14,146 @@ input{padding:12px;border-radius:10px;border:1px solid #aaa}
 button{padding:12px;background:#176b42;color:white;border:0;border-radius:9px;margin:4px}
 .city{background:#83c76b;margin:10px;padding:15px;border-radius:15px}
 .map{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.house{background:#e9d3a5;border:4px solid #98754b;border-radius:8px;height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:30px;box-shadow:0 6px #98754b}
+.house{background:#e9d3a5;border:4px solid #98754b;border-radius:8px;min-height:100px;display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:30px;box-shadow:0 6px #98754b}
 .house span{font-size:13px}
 .road{background:#777;color:white;text-align:center;padding:12px;margin:12px 0}
 </style>
 </head>
 <body>
+
 <header>
 <h1>🏙️ مدينتي</h1>
 <p>MY VIRTUAL CITY</p>
 </header>
+
 <div class="stats">
 <div>🏠 البيوت: <b id="count">6</b></div>
 <div>👥 السكان: <b id="people">6</b></div>
 </div>
+
 <div class="search">
 <h3>🔎 ابحث عن بيتك</h3>
 <input id="username" placeholder="اكتب اسمك">
 <button onclick="searchHouse()">بحث</button>
 <p id="result"></p>
 </div>
+
 <div class="city">
 <h2 style="text-align:center">🌳 خريطة المدينة</h2>
-<div class="map" id="map">
-<div class="house">🏠<span>أحمد</span></div>
-<div class="house">🏡<span>علي</span></div>
-<div class="house">🏠<span>محمد</span></div>
-<div class="house">🏡<span>حسن</span></div>
-<div class="house">🏠<span>حسين</span></div>
-<div class="house">🏡<span>زهراء</span></div>
-</div>
+
+<div class="map" id="map"></div>
+
 <div class="road">🛣️ الشارع الرئيسي 🛣️</div>
+
 <div style="text-align:center">
-<button onclick="add('🏠','بيت جديد')">إضافة بيت</button>
-<button onclick="add('✈️','مطار')">إضافة مطار</button>
-<button onclick="add('🏥','مستشفى')">إضافة مستشفى</button>
-<button onclick="add('🏫','مدرسة')">إضافة مدرسة</button>
+<button onclick="addHouse()">إضافة بيت</button>
+<button onclick="addFacility('✈️','مطار')">إضافة مطار</button>
+<button onclick="addFacility('🏥','مستشفى')">إضافة مستشفى</button>
+<button onclick="addFacility('🏫','مدرسة')">إضافة مدرسة</button>
 </div>
 </div>
+
 <script>
-let names=['أحمد','علي','محمد','حسن','حسين','زهراء'];
-function searchHouse(){
-let n=document.getElementById('username').value.trim();
-document.getElementById('result').innerText=
-names.includes(n)?'🏡 بيتك موجود في مدينتنا يا '+n:'لم نعثر على بيتك حالياً';
+let houses = [
+'أحمد','علي','محمد','حسن','حسين','زهراء'
+];
+
+let facilities = [];
+
+function saveData(){
+localStorage.setItem('cityHouses',JSON.stringify(houses));
+localStorage.setItem('cityFacilities',JSON.stringify(facilities));
 }
-function add(icon,name){
+
+function loadData(){
+try{
+let h=localStorage.getItem('cityHouses');
+let f=localStorage.getItem('cityFacilities');
+
+if(h) houses=JSON.parse(h);
+if(f) facilities=JSON.parse(f);
+}catch(e){
+console.log('تعذر تحميل البيانات');
+}
+}
+
+function render(){
+let map=document.getElementById('map');
+map.innerHTML='';
+
+houses.forEach(name=>{
 let b=document.createElement('div');
 b.className='house';
-b.innerHTML=icon+'<span>'+name+'</span>';
-document.getElementById('map').appendChild(b);
-document.getElementById('count').innerText=document.getElementById('map').children.length;
+b.append('🏠');
+
+let s=document.createElement('span');
+s.textContent=name;
+b.appendChild(s);
+
+map.appendChild(b);
+});
+
+facilities.forEach(item=>{
+let b=document.createElement('div');
+b.className='house';
+b.append(item.icon);
+
+let s=document.createElement('span');
+s.textContent=item.name;
+b.appendChild(s);
+
+map.appendChild(b);
+});
+
+document.getElementById('count').innerText=houses.length;
+document.getElementById('people').innerText=houses.length;
 }
+
+function searchHouse(){
+let n=document.getElementById('username').value.trim();
+
+document.getElementById('result').innerText=
+houses.includes(n)
+?'🏡 بيتك موجود في مدينتنا يا '+n
+:'لم نعثر على بيتك حالياً';
+}
+
+function addHouse(){
+let name=prompt('اكتب اسم صاحب البيت الجديد:');
+
+if(!name || !name.trim()) return;
+
+name=name.trim();
+
+if(houses.includes(name)){
+alert('هذا الاسم موجود مسبقاً!');
+return;
+}
+
+houses.push(name);
+saveData();
+render();
+
+alert('تمت إضافة بيت '+name+' بنجاح!');
+}
+
+function addFacility(icon,type){
+let name=prompt('اكتب اسم '+type+':',type);
+
+if(!name || !name.trim()) return;
+
+facilities.push({icon:icon,name:name.trim()});
+
+saveData();
+render();
+
+alert('تمت إضافة '+type+' بنجاح!');
+}
+
+loadData();
+render();
+
 </script>
 </body>
- </html>.
+</html>
+
